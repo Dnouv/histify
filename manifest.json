@@ -1,0 +1,26 @@
+{
+    "manifest_version": 3,
+    "name": "Hello Pika!",
+    "description": "Base Level Extension",
+    "version": "1.0",
+    "action": {
+        "default_popup": "hello.html",
+        "default_icon": "hello_extensions.png"
+    },
+    "background": {
+        "service_worker": "dist/background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "dist/content.js"
+            ]
+        }
+    ],
+    "permissions": [
+        "activeTab"
+    ]
+}

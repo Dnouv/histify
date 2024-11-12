@@ -1,0 +1,28 @@
+{
+    "name": "my-chrome-extension",
+    "version": "1.0.0",
+    "description": "A Chrome extension built with TypeScript",
+    "main": "src/popup.ts",
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc --watch",
+        "start": "web-ext run",
+        "lint": "eslint ."
+    },
+    "keywords": [
+        "chrome",
+        "extension",
+        "typescript"
+    ],
+    "author": "Your Name",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/chrome": "^0.0.280",
+        "eslint": "^7.0.0",
+        "typescript": "^5.6.3",
+        "web-ext": "^6.0.0"
+    },
+    "dependencies": {
+        "chrome-types": "^0.1.319"
+    }
+}
