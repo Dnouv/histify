@@ -70,7 +70,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     const extractedText = extractText();
     const summary = await getSummaryFromPrompt(extractedText);
     console.log("Summary:", summary);
-    // const summary = summarizeText(extractedText, 3); // Summarize to 3 sentences
     chrome.runtime.sendMessage({ action: "storeSummary", summary });
     sendResponse({ status: "success" });
   }

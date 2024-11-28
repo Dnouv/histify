@@ -33,7 +33,8 @@
         "contextMenus",
         "history",
         "tabs",
-        "webNavigation"
+        "webNavigation",
+        "alarms"
     ],
     "host_permissions": [
         "http://*/*",

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text Embedding Generator</title>
+    <style>
+      #output {
+        white-space: pre-wrap;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Text Embedding Generator</h1>
+    <textarea
+      id="textInput"
+      rows="4"
+      cols="50"
+      placeholder="Enter text here..."
+    ></textarea>
+    <button id="generateButton">Generate Embedding</button>
+    <div id="output"></div>
+
+    <script type="module">
+      import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2";
+
+      async function generateEmbedding(text) {
+        console.log("Generating embedding for:", text);
+        const extractor = await pipeline(
+          "feature-extraction",
+          "Xenova/all-MiniLM-L6-v2"
+        );
+        const output = await extractor(text, {
+          pooling: "mean",
+          normalize: true,
+        });
+        document.getElementById("output").innerText = JSON.stringify(
+          output,
+          null,
+          2
+        );
+      }
+
+      document
+        .getElementById("generateButton")
+        .addEventListener("click", async () => {
+          const textInput = document.getElementById("textInput").value;
+          if (textInput.trim()) {
+            await generateEmbedding(textInput);
+          } else {
+            alert("Please enter some text first.");
+          }
+        });
+    </script>
+  </body>
+</html>

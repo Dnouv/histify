@@ -1,4 +1,7 @@
 // filepath: /Users/deva/Developer/ospr/chrome-ext/src/background.ts
+const HISTORY_RECORD = "summaries";
+const MAX_HISTORY_RECORDS = 100;
+const ALARM_PERIOD = 12 * 60; // 12 hours in minutes
 
 chrome.runtime.onInstalled.addListener(() => {
   console.log("Extension installed");
@@ -9,6 +12,49 @@ chrome.runtime.onInstalled.addListener(() => {
     title: "Open side panel",
     contexts: ["all"],
   });
+
+  // schedule a job to clear history every 12 hours
+  chrome.alarms.create("refreshHistory", {
+    periodInMinutes: ALARM_PERIOD,
+    when: Date.now(),
+  });
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  console.log("Alarm triggered:", alarm);
+
+  if (alarm.name === "refreshHistory") {
+    chrome.storage.local.get([HISTORY_RECORD], (result) => {
+      let summaries = result[HISTORY_RECORD] || {};
+      const urls = Object.values(summaries) as {
+        metadata: { url: string; timestamp: number; tab: chrome.tabs.Tab };
+        summary: string;
+      }[];
+
+      if (urls.length === 0) {
+        return;
+      }
+
+      if (urls.length > MAX_HISTORY_RECORDS) {
+        const sortedUrls = urls.sort(
+          (a, b) => b.metadata.timestamp - a.metadata.timestamp
+        );
+        console.log("History too large, cleaning up", sortedUrls);
+        console.log("Summaries:", urls);
+        // Sort URLs by some criteria if needed, here we just slice the any after 100
+        const excessUrls = sortedUrls.slice(MAX_HISTORY_RECORDS);
+        excessUrls.forEach((obj) => {
+          delete summaries[obj.metadata.url];
+        });
+
+        chrome.storage.local.set({ [HISTORY_RECORD]: summaries }, () => {
+          console.log("History cleaned up");
+        });
+      }
+    });
+  }
+
+  return true;
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -36,15 +82,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "TEXT_SELECTED") {
-    // Store the selected text
-    // chrome.storage.local.set({ selectedText: message.text }, () => {
-    //   console.log("Selected text stored:", message.text);
-    // });
-  }
-});
-
 chrome.webNavigation.onCompleted.addListener(async (details) => {
   console.log("Web navigation completed:", details);
 
@@ -62,7 +99,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (url) {
       chrome.storage.local.get(["summaries"], (result) => {
         const summaries = result.summaries || {};
-        summaries[url] = summary; // Store summary by URL
+        const metadata = { url, timestamp: Date.now(), tab: sender.tab };
+        summaries[url] = { metadata, summary };
         chrome.storage.local.set({ summaries }, () => {
           console.log("Summary stored:", summary);
           sendResponse({ status: "success" });
