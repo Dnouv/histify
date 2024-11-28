@@ -9,7 +9,8 @@
         "default_title": "Open the popup"
     },
     "background": {
-        "service_worker": "dist/background.js"
+        "service_worker": "dist/background.js",
+        "type": "module"
     },
     "content_scripts": [
         {
@@ -18,7 +19,8 @@
             ],
             "js": [
                 "dist/content.js"
-            ]
+            ],
+            "type": "module"
         }
     ],
     "side_panel": {
@@ -29,6 +31,12 @@
         "sidePanel",
         "storage",
         "contextMenus",
-        "history"
+        "history",
+        "tabs",
+        "webNavigation"
+    ],
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
     ]
 }

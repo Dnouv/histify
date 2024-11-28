@@ -2,7 +2,7 @@
     "name": "my-chrome-extension",
     "version": "1.0.0",
     "description": "A Chrome extension built with TypeScript",
-    "main": "src/popup.ts",
+    "main": "dist/popup.js",
     "scripts": {
         "build": "tsc",
         "watch": "tsc --watch",
@@ -23,7 +23,8 @@
         "web-ext": "^6.0.0"
     },
     "dependencies": {
-        "chrome-types": "^0.1.319"
+        "chrome-types": "^0.1.319",
+        "@types/dom-chromium-ai": "^0.0.4"
     },
     "type": "module"
 }

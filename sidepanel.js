@@ -23,20 +23,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Improved prompt
         const prompt = `
-You are an assistant that helps users find the most relevant links from their browsing history based on their query.
-User Query: "${query}"
-Browsing History:
-${combinedHistory}
+            You are an assistant that helps users find the most relevant links from their browsing history based on their query.
+            User Query: "${query}"
+            Browsing History:
+            ${combinedHistory}
 
-Please provide the top 3 most relevant links from the browsing history that match the user's query.
-Respond in the following format:
+            Please provide the top 3 most relevant links from the browsing history that match the user's query.
+            Respond in the following format:
 
-1. [Title 1](URL 1)
-2. [Title 2](URL 2)
-3. [Title 3](URL 3)
+            1. [Title 1](URL 1)
+            2. [Title 2](URL 2)
+            3. [Title 3](URL 3)
 
-After listing the links, provide a brief explanation (in 2-3 sentences) of why these links are relevant to the user's query.
-`;
+            After listing the links, provide a brief explanation (in 2-3 sentences) of why these links are relevant to the user's query.
+            `;
 
         // Check if window.ai is available
         if (window.ai && window.ai.languageModel) {
