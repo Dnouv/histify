@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image to Text Captioning</title>
+    <style>
+      #outputCanvas {
+        display: none;
+        max-width: 100%;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Image to Text Captioning</h1>
+    <input type="file" id="imageUpload" accept="image/*" />
+    <button id="detectButton">Detect Text</button>
+    <div id="output"></div>
+    <canvas id="outputCanvas"></canvas>
+
+    <script type="module">
+      import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2";
+
+      async function runPipeline(imageBase64) {
+        console.log("Running pipeline", imageBase64);
+        const detector = await pipeline(
+          "zero-shot-object-detection",
+          "Xenova/owlv2-base-patch16-finetuned",
+          { device: "webgpu" }
+        );
+
+        const candidate_labels = ["text", "japanese text block"];
+        const output = await detector(imageBase64, candidate_labels);
+        document.getElementById("output").innerText = JSON.stringify(
+          output,
+          null,
+          2
+        );
+
+        // Display the image and draw bounding boxes
+        const outputCanvas = document.getElementById("outputCanvas");
+        const ctx = outputCanvas.getContext("2d");
+        const img = new Image();
+        img.onload = () => {
+          outputCanvas.width = img.width;
+          outputCanvas.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 2;
+          output.forEach((box) => {
+            console.log(box);
+            ctx.strokeRect(
+              box.box.xmin,
+              box.box.ymin,
+              box.box.xmax - box.box.xmin,
+              box.box.ymax - box.box.ymin
+            );
+            ctx.fillText(
+              " (" + box.score + ")",
+              box.box.xmin,
+              box.box.ymin - 5
+            );
+          });
+          outputCanvas.style.display = "block";
+        };
+        img.src = imageBase64;
+      }
+
+      document
+        .getElementById("detectButton")
+        .addEventListener("click", async () => {
+          const fileInput = document.getElementById("imageUpload");
+          if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+              const imageBase64 = e.target.result;
+              await runPipeline(imageBase64);
+            };
+            reader.readAsDataURL(file);
+          } else {
+            alert("Please upload an image first.");
+          }
+        });
+    </script>
+  </body>
+</html>

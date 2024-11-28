@@ -24,5 +24,6 @@
     },
     "dependencies": {
         "chrome-types": "^0.1.319"
-    }
+    },
+    "type": "module"
 }

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OCR with Preprocessing for Better Quality</title>
+  </head>
+  <body>
+    <input type="file" id="imageInput" accept="image/*" />
+    <canvas id="canvas" style="display: none"></canvas>
+    <!-- Hidden canvas for original image processing -->
+    <div id="preprocessingOutputs"></div>
+    <!-- Container to display preprocessing results -->
+    <div id="output"></div>
+    <div id="manga-ocr-output"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+    <script type="module">
+      import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2";
+      document
+        .getElementById("imageInput")
+        .addEventListener("change", function (event) {
+          const file = event.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function () {
+              const img = new Image();
+              img.src = reader.result;
+              img.onload = function () {
+                const canvas = document.getElementById("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = img.width;
+                canvas.height = img.height;
+                context.drawImage(img, 0, 0);
+
+                // Bounding box data from the object detection model
+                const boundingBoxes = [
+                  {
+                    score: 0.1961706429719925,
+                    label: "text",
+                    box: {
+                      xmin: 267,
+                      ymin: 772,
+                      xmax: 1647,
+                      ymax: 1047,
+                    },
+                  },
+                ];
+
+                const preprocessingOutputsContainer = document.getElementById(
+                  "preprocessingOutputs"
+                );
+                preprocessingOutputsContainer.innerHTML = ""; // Clear previous outputs
+
+                // Loop through each bounding box and perform OCR with preprocessing
+                boundingBoxes.forEach((boxData, index) => {
+                  const { xmin, ymin, xmax, ymax } = boxData.box;
+                  const width = xmax - xmin;
+                  const height = ymax - ymin;
+
+                  // Crop the text region from the original image
+                  const croppedCanvas = document.createElement("canvas");
+                  croppedCanvas.width = width;
+                  croppedCanvas.height = height;
+                  const croppedContext = croppedCanvas.getContext("2d");
+                  croppedContext.drawImage(
+                    canvas,
+                    xmin,
+                    ymin,
+                    width,
+                    height, // Source coordinates and size
+                    0,
+                    0,
+                    width,
+                    height // Destination coordinates and size
+                  );
+
+                  // Load the cropped image into OpenCV.js for preprocessing
+                  let src = cv.imread(croppedCanvas);
+                  let gray = new cv.Mat();
+                  let binary = new cv.Mat();
+
+                  // Step 1: Convert to grayscale
+                  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                  // Step 2: Apply thresholding to binarize the image
+                  cv.threshold(
+                    gray,
+                    binary,
+                    0,
+                    255,
+                    cv.THRESH_BINARY | cv.THRESH_OTSU
+                  );
+
+                  // Step 3: Apply morphological transformations to make text more prominent
+                  let kernel = cv.getStructuringElement(
+                    cv.MORPH_RECT,
+                    new cv.Size(3, 3)
+                  );
+                  cv.morphologyEx(binary, binary, cv.MORPH_CLOSE, kernel);
+
+                  // Display the preprocessing steps
+                  const stepCanvas1 = document.createElement("canvas");
+                  stepCanvas1.width = width;
+                  stepCanvas1.height = height;
+                  cv.imshow(stepCanvas1, gray); // Display grayscale image
+                  const stepCanvas2 = document.createElement("canvas");
+                  stepCanvas2.width = width;
+                  stepCanvas2.height = height;
+                  cv.imshow(stepCanvas2, binary); // Display binary image
+
+                  // Append preprocessing steps to the container
+                  const stepList = document.createElement("div");
+                  stepList.innerHTML = `<strong>Text Region ${index + 1} (${
+                    boxData.label
+                  }):</strong>`;
+                  stepList.appendChild(stepCanvas1);
+                  stepList.appendChild(stepCanvas2);
+                  preprocessingOutputsContainer.appendChild(stepList);
+
+                  async function runPipeline() {
+                    const texify = await pipeline(
+                      "image-to-text",
+                      "dnouv/manga-ocr",
+                      { device: "webgpu" }
+                    );
+                    const output = await texify(stepCanvas2.toDataURL());
+                    console.log(output);
+                    document.getElementById("manga-ocr-output").innerText =
+                      output;
+                  }
+                  runPipeline();
+                  // Run OCR on the preprocessed image
+                  Tesseract.recognize(stepCanvas2.toDataURL(), "jpn", {
+                    logger: (m) => console.log(m), // Log progress
+                  })
+                    .then(({ data: { text } }) => {
+                      // Append the extracted text to the output
+                      document.getElementById(
+                        "output"
+                      ).innerText += `${boxData.label}: ${text}\n`;
+                    })
+                    .catch((error) => {
+                      console.error("OCR Error:", error);
+                    });
+
+                  // Clean up
+                  src.delete();
+                  gray.delete();
+                  binary.delete();
+                  kernel.delete();
+                });
+              };
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+    </script>
+  </body>
+</html>

@@ -5,7 +5,8 @@
     "version": "1.0",
     "action": {
         "default_popup": "hello.html",
-        "default_icon": "hello_extensions.png"
+        "default_icon": "hello_extensions.png",
+        "default_title": "Open the popup"
     },
     "background": {
         "service_worker": "dist/background.js"
@@ -20,7 +21,14 @@
             ]
         }
     ],
+    "side_panel": {
+        "default_path": "sidePanel.html"
+    },
     "permissions": [
-        "activeTab"
+        "activeTab",
+        "sidePanel",
+        "storage",
+        "contextMenus",
+        "history"
     ]
 }
