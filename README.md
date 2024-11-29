@@ -25,6 +25,7 @@ my-chrome-extension
 
 ### Prerequisites
 - Node.js and npm installed on your machine.
+-  Disable the flag: chrome://flags/#text-safety-classifier it will block the extension from running.
 
 ### Installation
 1. Clone the repository:
