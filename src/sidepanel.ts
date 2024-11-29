@@ -1,5 +1,26 @@
 import { bm25Search } from "./tokenize.js";
 
+function createMessage(content: string, isUser: boolean) {
+  const messageDiv = document.createElement("div");
+  messageDiv.className = `message ${
+    isUser ? "user-message" : "assistant-message"
+  }`;
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar";
+  avatar.textContent = isUser ? "U" : "A";
+
+  const messageContent = document.createElement("div");
+  messageContent.className = "message-content";
+  messageContent.innerHTML = isUser
+    ? content
+    : (window as any).marked.parse(content);
+
+  messageDiv.appendChild(avatar);
+  messageDiv.appendChild(messageContent);
+  return messageDiv;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const actionButton = document.getElementById(
     "actionButton"
@@ -15,21 +36,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Clear previous output
-    outputArea.textContent = "Processing...";
+    // outputArea.textContent = "Processing...";
+    outputArea.appendChild(createMessage(query, true));
 
-    // Retrieve history data from storage
-    chrome.storage.local.get("historyResults", async (data) => {
-      if (data.historyResults && data.historyResults.length > 0) {
-        // Prepare history data for the AI model
-        const combinedHistory = data.historyResults
-          .map(
-            (item: { title: string; url: string }) =>
-              `${item.title} - ${item.url}`
-          )
-          .join("\n");
+    // Add loading message
+    const loadingMsg = createMessage(
+      'Thinking<div class="loading-dots"><span></span><span></span><span></span></div>',
+      false
+    );
+    outputArea.appendChild(loadingMsg);
 
-        // Improved prompt
-        const prompt = `
+    // Scroll to bottom
+    outputArea.scrollTop = outputArea.scrollHeight;
+
+    // Improved prompt
+    const prompt = `
             You are an assistant that helps users find the most relevant links from their browsing history based on their query.
             User Query: "${query}"
 
@@ -45,60 +66,80 @@ document.addEventListener("DOMContentLoaded", () => {
             After listing the links, provide a brief explanation (in 2-3 sentences) of why these links are relevant to the user's query.
             `;
 
-        // Check if window.ai is available
-        if (window.ai && window.ai.languageModel) {
-          try {
-            const { available } = await window.ai.languageModel.capabilities();
-            if (available !== "no") {
-              const results = await bm25Search(query);
+    // Check if window.ai is available
+    if (window.ai && window.ai.languageModel) {
+      try {
+        const { available } = await window.ai.languageModel.capabilities();
+        if (available !== "no") {
+          console.time("BM25 Search");
+          const results = await bm25Search(query);
+          console.timeEnd("BM25 Search");
 
-              const session = await window.ai.languageModel.create();
-              const combinedLinks = results
-                .slice(0, 3)
-                .map((result, index) => {
-                  return `${index + 1}. [${result.summary}](${result.url})`;
-                })
-                .join("\n");
+          console.time("AI Language Model");
+          const session = await window.ai.languageModel.create();
+          console.timeEnd("AI Language Model");
+          const combinedLinks = results
+            .slice(0, 3)
+            .map((result, index) => {
+              return `${index + 1}. [${result.summary}](${result.url})`;
+            })
+            .join("\n");
 
-              const stream = session.promptStreaming(
-                `${prompt}\n BROWSING HISTORY: ${combinedLinks}`
-              );
+          const stream = session.promptStreaming(
+            `${prompt}\n BROWSING HISTORY: ${combinedLinks}`
+          );
 
-              console.log(
-                "BM25 Results:",
-                await session.countPromptTokens(
-                  `${prompt}\n BROWSING HISTORY: ${combinedLinks}`
-                )
-              );
+          console.log(
+            "BM25 Results:",
+            await session.countPromptTokens(
+              `${prompt}\n BROWSING HISTORY: ${combinedLinks}`
+            )
+          );
 
-              const read = stream.getReader();
+          console.time("Reading Stream");
+          const read = stream.getReader();
+          console.timeEnd("Reading Stream");
 
-              let done = false;
-              let response = "";
-              while (!done) {
-                const { value, done: isDone } = await read.read();
+          let done = false;
+          outputArea.removeChild(loadingMsg);
+          let currentResponseMsg: HTMLElement | null = createMessage("", false);
+          outputArea.appendChild(currentResponseMsg);
 
-                done = isDone;
-                console.log("Value:", value);
+          while (!done) {
+            const { value, done: isDone } = await read.read();
 
-                value
-                  ? (outputArea.innerHTML = (window as any).marked.parse(value))
-                  : null;
-              }
-            } else {
-              outputArea.textContent = "Language model is not available.";
+            done = isDone;
+            console.log("Value:", value);
+
+            // value
+            //   ? (outputArea.innerHTML = (window as any).marked.parse(value))
+            //   : null;
+            if (value) {
+              const messageContent =
+                currentResponseMsg.querySelector(".message-content");
+              messageContent
+                ? (messageContent.innerHTML = (window as any).marked.parse(
+                    value
+                  ))
+                : null;
+              outputArea.scrollTop = outputArea.scrollHeight;
             }
-          } catch (error) {
-            console.error("An error occurred:", error);
-            outputArea.textContent =
-              "An error occurred while processing your request.";
           }
         } else {
-          outputArea.textContent = "AI language model is not available.";
+          outputArea.appendChild(
+            createMessage("AI language model is not available.", false)
+          );
         }
-      } else {
-        outputArea.textContent = "No browsing history data available.";
+      } catch (error) {
+        console.error("An error occurred:", error);
+        outputArea.appendChild(
+          createMessage("An error occurred. Please try again.", false)
+        );
       }
-    });
+    } else {
+      outputArea.appendChild(
+        createMessage("AI language model is not available.", false)
+      );
+    }
   });
 });
