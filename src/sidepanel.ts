@@ -40,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
             2. [Title 2](URL 2)
             3. [Title 3](URL 3)
 
+            Keep the title concise and relevant to the content of the link, maximum 30-40 characters.
+
             After listing the links, provide a brief explanation (in 2-3 sentences) of why these links are relevant to the user's query.
             `;
 
