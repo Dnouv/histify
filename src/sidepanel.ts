@@ -1,7 +1,11 @@
+import { bm25Search } from "./tokenize.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-  const actionButton = document.getElementById("actionButton");
-  const userInput = document.getElementById("userInput");
-  const outputArea = document.getElementById("outputArea");
+  const actionButton = document.getElementById(
+    "actionButton"
+  ) as HTMLButtonElement;
+  const userInput = document.getElementById("userInput") as HTMLInputElement;
+  const outputArea = document.getElementById("outputArea") as HTMLDivElement;
 
   actionButton.addEventListener("click", async () => {
     const query = userInput.value.trim();
@@ -18,15 +22,16 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.historyResults && data.historyResults.length > 0) {
         // Prepare history data for the AI model
         const combinedHistory = data.historyResults
-          .map((item) => `${item.title} - ${item.url}`)
+          .map(
+            (item: { title: string; url: string }) =>
+              `${item.title} - ${item.url}`
+          )
           .join("\n");
 
         // Improved prompt
         const prompt = `
             You are an assistant that helps users find the most relevant links from their browsing history based on their query.
             User Query: "${query}"
-            Browsing History:
-            ${combinedHistory}
 
             Please provide the top 3 most relevant links from the browsing history that match the user's query.
             Respond in the following format:
@@ -43,14 +48,40 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const { available } = await window.ai.languageModel.capabilities();
             if (available !== "no") {
+              const results = await bm25Search(query);
+
               const session = await window.ai.languageModel.create();
+              const combinedLinks = results
+                .slice(0, 3)
+                .map((result, index) => {
+                  return `${index + 1}. [${result.summary}](${result.url})`;
+                })
+                .join("\n");
 
-              // Prompt the model and get the result
-              const stream = session.promptStreaming(prompt);
+              const stream = session.promptStreaming(
+                `${prompt}\n BROWSING HISTORY: ${combinedLinks}`
+              );
 
-              for await (const chunk of stream) {
-                outputArea.textContent = chunk;
-                outputArea.scrollTop = outputArea.scrollHeight;
+              console.log(
+                "BM25 Results:",
+                await session.countPromptTokens(
+                  `${prompt}\n BROWSING HISTORY: ${combinedLinks}`
+                )
+              );
+
+              const read = stream.getReader();
+
+              let done = false;
+              let response = "";
+              while (!done) {
+                const { value, done: isDone } = await read.read();
+
+                done = isDone;
+                console.log("Value:", value);
+
+                value
+                  ? (outputArea.innerHTML = (window as any).marked.parse(value))
+                  : null;
               }
             } else {
               outputArea.textContent = "Language model is not available.";

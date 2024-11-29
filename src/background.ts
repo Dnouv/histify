@@ -1,4 +1,6 @@
 // filepath: /Users/deva/Developer/ospr/chrome-ext/src/background.ts
+import { tokenize, calculateTermFrequency } from "./tokenize.js";
+
 const HISTORY_RECORD = "summaries";
 const MAX_HISTORY_RECORDS = 100;
 const ALARM_PERIOD = 12 * 60; // 12 hours in minutes
@@ -100,7 +102,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.storage.local.get(["summaries"], (result) => {
         const summaries = result.summaries || {};
         const metadata = { url, timestamp: Date.now(), tab: sender.tab };
-        summaries[url] = { metadata, summary };
+
+        const tokens = tokenize(summary); // Tokenize the text
+        const termFrequency = calculateTermFrequency(tokens); // Calculate term frequency
+        const docLength = tokens.length; // Document length
+
+        console.log("other data", metadata, termFrequency, docLength);
+
+        summaries[url] = { metadata, summary, termFrequency, docLength };
         chrome.storage.local.set({ summaries }, () => {
           console.log("Summary stored:", summary);
           sendResponse({ status: "success" });
