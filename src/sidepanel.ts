@@ -65,26 +65,30 @@ document.addEventListener("DOMContentLoaded", () => {
     outputArea.scrollTop = outputArea.scrollHeight;
 
     // Construct the assistant's prompt
-    const prompt = `
-You are an assistant that helps users find the most relevant links from their browsing history based on a query. Your task is to identify the most relevant links (up to 3) and present them clearly. 
+    const PROMPT = `
+You are an assistant that answers user queries based on their browsing history. Your task is to provide a clear, concise response to the user's query using information from the browsing history links and provided summaries. Include reference links for the sources at the end.
 
 ### Instructions:
-1. Use ONLY the browsing history to find relevant links.
-2. If a relevant link is found, provide it in the format:
-   - [Title](URL)
-3. If there are no relevant links, politely decline the request. Avoid guessing or fabricating links.
-4. Provide a brief explanation (2-3 sentences) of why the selected links are relevant to the user's query.
-5. Do NOT attempt to provide exactly 3 links unless the browsing history genuinely contains 3 highly relevant matches. Share only the most relevant ones (1-3 links).
-
+1. Carefully analyze the browsing history summaries and titles to find information that directly answers the user's query.
+2. If relevant information is found, craft a clear and concise response addressing the query. Reference the sources at the end of your response in this format:
+   - [Title 1](URL 1)
+   - [Title 2](URL 2)
+   - [Title 3](URL 3)
+4. Be assertive in providing responses. If you identify semantic matches, respond without hesitation or unnecessary apologies.
+5. Avoid fabricating or guessing information. Use ONLY the browsing history provided.
+6. Use semantic understanding to infer matches even if the query wording does not exactly match titles or summaries. 
+7. Always rely on semantic relevance and context to provide accurate responses.
+8. If there are multiple relevant sources, include all of them in the response.
+---
 ### Constraints:
-- Titles must be concise (max 40 characters) and directly related to the link's content.
-- Links must be directly relevant to the user's query. If no match exists, state: "Sorry, I couldn't find any relevant links in your browsing history."
-- Avoid using links unrelated to the browsing history provided.
+- Use ONLY the provided browsing history. Do not fabricate or assume information.
+- Keep your response concise and directly related to the query.
+- Reference titles must be concise (max 40 characters) and reflect the content.
 
 ### User Query:
-"${query}"
+${query}
 
-### Browsing History:
+### Browsing History (Titles, Links, and Summaries):
 `;
 
     // Add placeholder for streaming response
@@ -103,7 +107,9 @@ You are an assistant that helps users find the most relevant links from their br
             .slice(0, 3)
             .map(
               (result, index) =>
-                `${index + 1}. [${result.summary}](${result.url})`
+                `${index + 1}. [${result.title}](${result.url}) \n Summary: ${
+                  result.summary
+                }`
             )
             .join("\n");
 
@@ -112,15 +118,17 @@ You are an assistant that helps users find the most relevant links from their br
           console.timeEnd("AI Language Model");
 
           console.log(combinedLinks);
+
+          const promptModel = `${PROMPT}\n ${combinedLinks}`;
           // Stream AI-generated response
-          const stream = session.promptStreaming(
-            `${prompt}\n ${combinedLinks}`
-          );
+          const stream = session.promptStreaming(promptModel);
 
           console.log(
             "BM25 Results:",
-            await session.countPromptTokens(`${prompt}\n ${combinedLinks}`)
+            await session.countPromptTokens(promptModel)
           );
+
+          console.log("Prompt Model:", promptModel);
 
           const read = stream.getReader();
           let done = false;

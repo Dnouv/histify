@@ -64,7 +64,12 @@ export async function bm25Search(query: string): Promise<any[]> {
             return sum + idf[token] * (numerator / denominator);
           }, 0);
 
-          return { url: doc.metadata.url, summary: doc.summary, score };
+          return {
+            url: doc.metadata.url,
+            title: doc.metadata?.tab?.title,
+            summary: doc.summary,
+            score,
+          };
         }
       );
 
