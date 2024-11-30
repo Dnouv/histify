@@ -108,6 +108,24 @@
         line-height: 1.4;
       }
 
+      /* Universal selector for all elements inside message-content */
+      .message .message-content * {
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+      }
+
+      /* List specific styling */
+      .message .message-content ul,
+      .message .message-content ol {
+        padding-left: 20px;
+        margin: 8px 0;
+      }
+
+      .message .message-content li {
+        margin-bottom: 4px;
+      }
+
       .message.user-message .message-content {
         background-color: #d1f7c4;
       }
