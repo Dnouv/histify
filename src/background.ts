@@ -84,14 +84,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-chrome.webNavigation.onCompleted.addListener(async (details) => {
-  console.log("Web navigation completed:", details);
+chrome.webNavigation.onCompleted.addListener(
+  async (details) => {
+    if (details.frameId === 0) {
+      // Only handle main frame
+      console.log("Web navigation completed:", details);
 
-  if (details.url && !details.url.startsWith("chrome://")) {
-    chrome.tabs.sendMessage(details.tabId!, { action: "summarize" });
-  }
-  return true;
-});
+      if (details.url && !details.url.startsWith("chrome://")) {
+        chrome.tabs.sendMessage(details.tabId!, { action: "summarize" });
+      }
+    }
+  },
+  { url: [{ schemes: ["https"] }] } // Optional filter for URL schemes
+);
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "storeSummary" && message.summary) {

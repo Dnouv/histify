@@ -1,11 +1,12 @@
 const PROMPT = `
-You are an AI that can summarize text. Given the text below it can be in any language 
-or any script, but your job is to output a summary in English text only. Don't mention 
-anything about the language, just summarize the text. Also make sure to summarize such that
-it captures the essence of the text, such that if I read the summary I should be able to say what
-the rest of the text was about.
-DO NOT OUTPUT TEXT IN ANY OTHER CHARACTERS ONLY USE ENGLISH ALPHABETS IN THE OUTPUTS. For the other scripts romanize it.
-TEXT:
+You are an AI that summarizes text. Your task is to create a concise summary in English based on the text provided below. 
+
+### Guidelines:
+1. Summarize the text accurately, capturing its main idea and key details. The summary should clearly convey the essence of the original text.
+2. If the text is in another language or script, romanize it and ensure the summary is in English alphabets only.
+3. Do not include comments about the language or script; focus solely on summarizing the content.
+
+### Input Text:
 `;
 
 const getSummaryFromPrompt = async (text: string): Promise<string> => {
@@ -15,13 +16,15 @@ const getSummaryFromPrompt = async (text: string): Promise<string> => {
   const session = await window.ai.languageModel.create();
   console.log(session.tokensLeft, "used out of a total of", session.maxTokens);
 
-  const prompt = `${PROMPT} \n 
+  const prompt = `
+  ${PROMPT}
   ${text}
-  SUMMARY:
+  ### Summary:
   `;
   // totale token limit is ~6144
   // TODO: If text is big summarize it in parts, kinda summaries of summaries
   const totalTokens = await session.countPromptTokens(prompt);
+  console.log("total tokens", totalTokens);
   const response = await session.prompt(prompt);
   console.log("response genenrated", response);
   return response;
@@ -53,7 +56,12 @@ const checkPromptSupport = async (): Promise<boolean> => {
 // Helper function to extract text from the page
 function extractText(): string {
   const bodyText = document.body.innerText;
-  return bodyText ? bodyText.replace(/\s+/g, " ").trim() : "";
+  if (!bodyText) return "";
+
+  const words = bodyText.replace(/\s+/g, " ").trim().split(" ");
+
+  const first200Words = words.slice(0, 200);
+  return first200Words.join(" ");
 }
 
 // Basic summarization: Grab first N sentences
@@ -64,14 +72,24 @@ function summarizeText(text: string, numSentences: number = 3): string {
 }
 
 // Listen for the message from the background script
-// Listen for messages from the background script
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "summarize") {
+    // Handle async operations in a separate function
+    handleSummarize().then(sendResponse);
+    return true; // Keep message channel open for async response
+  }
+  return false;
+});
+
+async function handleSummarize() {
+  try {
     const extractedText = extractText();
     const summary = await getSummaryFromPrompt(extractedText);
     console.log("Summary:", summary);
-    chrome.runtime.sendMessage({ action: "storeSummary", summary });
-    sendResponse({ status: "success" });
+    await chrome.runtime.sendMessage({ action: "storeSummary", summary });
+    return { status: "success" };
+  } catch (error) {
+    console.error("Error in handleSummarize:", error);
+    return { status: "error", error: (error as any).message };
   }
-  return false; // Close the message channel
-});
+}

@@ -66,22 +66,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Construct the assistant's prompt
     const prompt = `
-      You are an assistant that helps users find the most relevant links from their browsing history based on their query.
-      User Query: "${query}"
+You are an assistant that helps users find the most relevant links from their browsing history based on a query. Your task is to identify the most relevant links (up to 3) and present them clearly. 
 
-      Please provide the top 3 most relevant links from the browsing history that match the user's query.
-      Respond in the following format:
+### Instructions:
+1. Use ONLY the browsing history to find relevant links.
+2. If a relevant link is found, provide it in the format:
+   - [Title](URL)
+3. If there are no relevant links, politely decline the request. Avoid guessing or fabricating links.
+4. Provide a brief explanation (2-3 sentences) of why the selected links are relevant to the user's query.
+5. Do NOT attempt to provide exactly 3 links unless the browsing history genuinely contains 3 highly relevant matches. Share only the most relevant ones (1-3 links).
 
-      1. [Title 1](URL 1)
-      2. [Title 2](URL 2)
-      3. [Title 3](URL 3)
+### Constraints:
+- Titles must be concise (max 40 characters) and directly related to the link's content.
+- Links must be directly relevant to the user's query. If no match exists, state: "Sorry, I couldn't find any relevant links in your browsing history."
+- Avoid using links unrelated to the browsing history provided.
 
-      Keep the title concise and relevant to the content of the link, maximum 30-40 characters.
+### User Query:
+"${query}"
 
-      After listing the links, provide a brief explanation (in 2-3 sentences) of why these links are relevant to the user's query. 
-      Remember to always reply in English no other language, and if there are no relevant links in the below browsing history, politely inform the user. DO NOT SHARE RANDOM LINKS.
-      And be as concise as possible in your responses.
-    `;
+### Browsing History:
+`;
 
     // Add placeholder for streaming response
     let currentResponseMsg: HTMLElement | null = createMessage("", false);
@@ -107,16 +111,15 @@ document.addEventListener("DOMContentLoaded", () => {
           const session = await window.ai.languageModel.create(); // Create session
           console.timeEnd("AI Language Model");
 
+          console.log(combinedLinks);
           // Stream AI-generated response
           const stream = session.promptStreaming(
-            `${prompt}\nBROWSING HISTORY: ${combinedLinks}`
+            `${prompt}\n ${combinedLinks}`
           );
 
           console.log(
             "BM25 Results:",
-            await session.countPromptTokens(
-              `${prompt}\nBROWSING HISTORY: ${combinedLinks}`
-            )
+            await session.countPromptTokens(`${prompt}\n ${combinedLinks}`)
           );
 
           const read = stream.getReader();
