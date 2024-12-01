@@ -1,0 +1,45 @@
+name: Package Chrome Extension
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build-and-attach:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20 # Use the Node.js version your project needs
+
+      # 3. Install dependencies
+      - name: Install dependencies
+        run: yarn # or npm install if you use npm
+
+      # 4. Compile TypeScript
+      - name: Compile TypeScript
+        run: yarn tsc # or npm run tsc
+
+      # 5. Create the build directory and zip the output
+      - name: Package extension
+        run: |
+          mkdir build
+          cp -r assets dist lib sidePanel.html manifest.json build/
+          zip -r chrome-extension.zip build/
+
+      # 6. Upload the artifact to the release
+      - name: Upload release artifact
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: histify.zip
+          asset_name: histify.zip
+          content_type: application/zip

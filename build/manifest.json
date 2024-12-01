@@ -1,0 +1,45 @@
+{
+    "manifest_version": 3,
+    "name": "Histify",
+    "description": "Your personal assistant for browsing history.",
+    "version": "1.0",
+    "action": {
+        "default_icon": "assets/icons/iconc2.png",
+        "default_title": "Ask Histify"
+    },
+    "background": {
+        "service_worker": "dist/background.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "dist/content.js"
+            ],
+            "type": "module"
+        }
+    ],
+    "side_panel": {
+        "default_path": "sidePanel.html"
+    },
+    "permissions": [
+        "activeTab",
+        "sidePanel",
+        "storage",
+        "contextMenus",
+        "history",
+        "tabs",
+        "webNavigation",
+        "alarms"
+    ],
+    "host_permissions": [
+        "http://*/*",
+        "https://*/*"
+    ],
+    "icons": {
+        "128": "assets/icons/iconc2.png"
+    }
+}

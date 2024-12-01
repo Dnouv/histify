@@ -15,16 +15,15 @@
         "typescript"
     ],
     "author": "Your Name",
-    "license": "MIT",
+    "license": "Apache License 2.0",
     "devDependencies": {
         "@types/chrome": "^0.0.280",
+        "@types/dom-chromium-ai": "^0.0.4",
+        "chrome-types": "^0.1.319",
         "eslint": "^7.0.0",
         "typescript": "^5.6.3",
         "web-ext": "^8.3.0"
     },
-    "dependencies": {
-        "@types/dom-chromium-ai": "^0.0.4",
-        "chrome-types": "^0.1.319"
-    },
+    "dependencies": {},
     "type": "module"
 }
