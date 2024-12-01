@@ -1,7 +1,7 @@
 # Histify: Your Smart Browser History Assistant
 
 ## Overview
-This project is a Chrome extension named **Histify**. A powerful Chrome extension, transforms your browser history into an intelligent and searchable assistant.
+This project is a Chrome extension named **Histify**. A powerful Chrome extension, transforms your browser history into an intelligent and searchable assistant. Built on top of the **Gemini Nano** model, Histify allows you to query your browser history in natural language and get the most relevant answers. The extension is designed to be user-friendly and intuitive, providing a seamless experience for users to interact with their browser history.
 
 ## Project Structure
 [structure.md](structure.md)
@@ -55,6 +55,12 @@ This bypass performance checks which might get in the way of having Gemini Nano 
 - Visit as many websites as you like.
 
 Now to query your history in natural language, click on the extension icon in the top right corner of the browser and a side panel will open up. You can type in your query in the search bar and the extension will show you the most relevant pages from your history. Or ask a question in natural language and the extension will provide you with the most relevant answer from your history.
+
+### Upcoming Features
+- [ ] Support for more languages.
+- [ ] Support for more browsers.
+- [ ] Support more LLM models.
+- [ ] Support for vectorized search.
 
 
 ## License
