@@ -11,7 +11,7 @@ chrome.runtime.onInstalled.addListener(() => {
   // Create a context menu item
   chrome.contextMenus.create({
     id: "openSidePanel",
-    title: "Open side panel",
+    title: "Ask Histify",
     contexts: ["all"],
   });
 
@@ -21,6 +21,11 @@ chrome.runtime.onInstalled.addListener(() => {
     when: Date.now(),
   });
 });
+
+// Allows users to open the side panel by clicking on the action toolbar icon
+chrome.sidePanel
+  .setPanelBehavior({ openPanelOnActionClick: true })
+  .catch((error) => console.error(error));
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   console.log("Alarm triggered:", alarm);

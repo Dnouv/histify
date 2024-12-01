@@ -1,12 +1,11 @@
 {
     "manifest_version": 3,
-    "name": "Hello Pika!",
-    "description": "Base Level Extension",
+    "name": "Histify",
+    "description": "Your personal assistant for browsing history.",
     "version": "1.0",
     "action": {
-        "default_popup": "hello.html",
-        "default_icon": "hello_extensions.png",
-        "default_title": "Open the popup"
+        "default_icon": "assets/icons/iconc2.png",
+        "default_title": "Ask Histify"
     },
     "background": {
         "service_worker": "dist/background.js",
@@ -39,5 +38,8 @@
     "host_permissions": [
         "http://*/*",
         "https://*/*"
-    ]
+    ],
+    "icons": {
+        "128": "assets/icons/iconc2.png"
+    }
 }
