@@ -30,14 +30,9 @@
         "sidePanel",
         "storage",
         "contextMenus",
-        "history",
         "tabs",
         "webNavigation",
         "alarms"
-    ],
-    "host_permissions": [
-        "http://*/*",
-        "https://*/*"
     ],
     "icons": {
         "128": "assets/icons/iconc2.png"

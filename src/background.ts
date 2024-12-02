@@ -72,19 +72,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       return;
     }
 
-    // Fetch the browsing history asynchronously
-    chrome.history.search({ text: "", maxResults: 20 }, async (results) => {
-      console.log("History results:", results);
-
-      // Store the history results
-      chrome.storage.local.set({ historyResults: results }, () => {
-        console.log("History results stored");
-
-        // Open the side panel after storing data
-        chrome.sidePanel.setOptions({ path: "sidepanel.html" });
-      });
-    });
-
     chrome.sidePanel.open({ windowId: tab.windowId });
   }
 });
